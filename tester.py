@@ -1,15 +1,11 @@
 import sys
-from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QGridLayout
+from PyQt6.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QGridLayout, QLineEdit, QPushButton
 
 
-class MyApp(QWidget):
+class Window(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
-
-    def initUI(self):
         # self.statusBar().showMessage("Waiting")
-
         label = QLabel('Hello PyQt6')
 
         layout = QGridLayout()
@@ -19,12 +15,19 @@ class MyApp(QWidget):
 
         self.setWindowTitle("My Test Window")
         self.setGeometry(300, 300, 320, 240)
-        self.show()
+
+        input = QLineEdit(self)
+        input.move(50, 50)
+
+        button = QPushButton("Click me", self)
+        button.move(200, 200)
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = MyApp()
+    window = Window()
+    window.show()
+
     sys.exit(app.exec())
 
 
