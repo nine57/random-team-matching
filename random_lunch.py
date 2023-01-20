@@ -1,8 +1,6 @@
 import sys
-from PyQt6 import QtCore, QtGui
+# from PyQt6 import QtCore, QtGui
 from PyQt6.QtWidgets import (
-    # QLabel,
-    # QErrorMessage,
     QApplication,
     QFileDialog,
     QWidget,
@@ -13,82 +11,78 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QSpinBox,
+    QCheckBox,
 )
+
+
+class FileTypeError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+
+    def __str__(self):
+        return self.msg
 
 
 class Main(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Random Lunch Member Matching")
-        # self.setGeometry(300, 300, 480, 360)
-        self.setGeometry(200, 200, 600, 480)
-        self.setContentsMargins(20, 20, 20, 10)
-
-        self.status_bar = self.statusBar()
-        self.button_open_file = QPushButton("Open File", self)
-        self.file_path_box = QLineEdit(self)
-        self.team_number_box = QSpinBox(self)
-        self.button_team_set = QPushButton("Team Set", self)
-        self.result_box = QPlainTextEdit(self)
-        self.button_start = QPushButton("Start", self)
-        # self.input_box = QLineEdit(self)
-
         self._init_ui()
         self._init_util()
-        self._init_data()
 
     def _init_ui(self):
+        # default
+        self.setWindowTitle("Random Lunch Member Matching")
+        self.setGeometry(200, 200, 600, 480)
+        self.setContentsMargins(20, 20, 20, 10)
+        self.status_bar = self.statusBar()
+        self.status_bar.showMessage("made by Dale")
+
+        # component
+        self.open_file_button = QPushButton("Open File", self)
+        self.file_path_box = QLineEdit(self)
+        self.team_number_box = QSpinBox(self)
+        self.team_set_button = QPushButton("Team Set", self)
+        self.round_number_box = QSpinBox(self)
+        self.round_set_button = QPushButton("Round Set", self)
+        self.result_box = QPlainTextEdit(self)
+        self.start_button = QPushButton("Start", self)
+        self.save_result_button = QPushButton("Save Result", self)
+        self.leader_exist_check = QCheckBox(self)
+        self.error_dialog = QMessageBox()
+        # self.input_box = QLineEdit(self)
+
+        # position
         widget = QWidget()
         self.setCentralWidget(widget)
         grid = QGridLayout(widget)
-
-        # File Set up
-        grid.addWidget(
-            self.file_path_box, 0, 0, 1, 3
-            # QtCore.Qt.AlignmentFlag.AlignVCenter | QtCore.Qt.AlignmentFlag.AlignBottom
-        )
-        self.file_path_box.setPlaceholderText("Select file")
-        grid.addWidget(
-            self.button_open_file, 0, 3, 1, 1,
-            QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
-        )
-        # Team Set up
-        grid.addWidget(
-            self.team_number_box, 1, 0, 1, 1,
-            # QtCore.Qt.AlignmentFlag.AlignHCenter
-        )
-        grid.addWidget(
-            self.button_team_set, 1, 1, 1, 1,
-            QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
-        )
-        # Result Box
-        grid.addWidget(
-            self.result_box, 2, 0, 3, 3,
-            # QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignHCenter
-        )
+        # File Select
+        grid.addWidget(self.file_path_box, 0, 0, 1, 3)
+        self.file_path_box.setPlaceholderText("파일을 선택해주세요")
+        grid.addWidget(self.open_file_button, 0, 3, 1, 1)
+        # Data Set up
+        grid.addWidget(self.team_number_box, 1, 0, 1, 1)
+        grid.addWidget(self.team_set_button, 1, 1, 1, 1)
+        grid.addWidget(self.leader_exist_check, 1, 3, 1, 1)
+        grid.addWidget(self.round_number_box, 2, 0, 1, 1)
+        grid.addWidget(self.round_set_button, 2, 1, 1, 1)
         # Action
-        grid.addWidget(
-            self.button_start, 2, 3, 1, 2,
-        )
-
-        # # test
-        # grid.addWidget(
-        #     self.input_box, 3, 0,)
-
-        # Set Status Bar
-        self.status_bar.showMessage("made by Dale")
+        grid.addWidget(self.result_box, 3, 0, 3, 3)
+        self.result_box.setPlaceholderText("랜덤 매칭 결과")
+        grid.addWidget(self.start_button, 3, 3, 1, 2)
+        grid.addWidget(self.save_result_button, 5, 3, 1, 2)
 
     def _init_util(self):
+        self.open_file_button.clicked.connect(self.open_file)
         self.team_number_box.setRange(3, 9)
         self.team_number_box.setValue(5)
-        self.button_team_set.clicked.connect(self.set_total_team_number)
-        self.button_open_file.clicked.connect(self.open_file)
-        self.button_start.clicked.connect(self.match_team)
-        self.error_dialog = QMessageBox()
-        # self.input_box.returnPressed.connect(self.set_total_team_number)
-
-    def _init_data(self):
         self.total_team_number = 5
+        self.team_set_button.clicked.connect(self.set_total_team_number)
+        self.round_number_box.setValue(1)
+        self.round_number = 1
+        self.round_set_button.clicked.connect(self.set_round_number)
+        self.start_button.clicked.connect(self.match_team)
+        self.save_result_button.clicked.connect(self.save_result_to_csv_file)
+        # self.input_box.returnPressed.connect(self.set_total_team_number)
 
     def open_file(self):
         window = QFileDialog()
@@ -97,22 +91,33 @@ class Main(QMainWindow):
             self.file_path = filename[0]
             self.file_name = self.file_path.split("/")[-1]
             if self.file_name.split(".")[-1] != "csv":
-                self.error_dialog.about(self, "파일 선택 에러", "csv 파일을 선택해주세요")
-            self.file_path_box.setText(self.file_path)
+                raise FileTypeError("csv 파일을 선택해주세요")
         except IndexError as e:
             self.error_dialog.about(self, "알수 없는 에러", f"{e}")
+        except FileTypeError as e:
+            self.error_dialog.about(self, "파일 선택 에러", f"{e}")
+        else:
+            self.file_path_box.setText(self.file_path)
 
     def set_total_team_number(self):
         try:
             self.total_team_number = self.team_number_box.value()
         except ValueError:
             self.error_dialog.about(self, "입력값 에러", "숫자를 입력해주세요")
-            # QErrorMessage()
-            # error_dialog.showMessage("Input Number!!")
+
+    def set_round_number(self):
+        try:
+            self.round_number = self.round_number_box.value()
+        except ValueError:
+            self.error_dialog.about(self, "입력값 에러", "숫자를 입력해주세요")
 
     def match_team(self):
         print("start matching")
-        self.error_dialog.about(self, "Work in Progress", "미완성")
+        self.error_dialog.about(self, "Work in Progress", "미완성 영역입니다")
+
+    def save_result_to_csv_file(self):
+        print("start saving result")
+        self.error_dialog.about(self, "Work in Progress", "미완성 영역입니다")
 
 
 if __name__ == '__main__':
@@ -120,17 +125,3 @@ if __name__ == '__main__':
     main = Main()
     main.show()
     sys.exit(app.exec())
-
-
-# init
-    # Set Size
-    # self.resize(600, 240)
-
-    # Set Label (With QWidget module)
-    # label = QLabel("Random Lunch Program - PyQt6 UI")
-    # layout = QGridLayout()
-    # layout.addWidget(label)
-    # self.setLayout(layout)
-
-# def func(self):
-#     self.input.setText("Hello World")
