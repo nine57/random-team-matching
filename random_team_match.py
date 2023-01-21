@@ -1,5 +1,7 @@
 import csv
 import sys
+import time
+from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -16,7 +18,7 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QHeaderView,
 )
-from data_handler import DataLoader, DataProcessor
+from data_handler import MEMBERS, DataLoader, DataProcessor
 from error import FileTypeError
 
 
@@ -26,6 +28,7 @@ class Main(QMainWindow):
         self.prev_team_list_dict = None
         self.prev_leader_list = None
         self.prev_data_file_path = None
+        self.members_file_path = None
         self.round_number = 1
         self.total_team_number = 5
         self._init_ui()
@@ -33,23 +36,24 @@ class Main(QMainWindow):
 
     def _init_ui(self):
         # window
-        self.setWindowTitle("Random Lunch Member Matching")
-        self.setGeometry(200, 200, 600, 480)
+        self.setWindowTitle("Team Member Random Match")
+        self.setWindowIcon(QIcon('owl_icon.png'))
+        self.setGeometry(300, 200, 600, 480)
         self.setContentsMargins(20, 20, 20, 10)
         self.status_bar = self.statusBar()
-        self.status_bar.showMessage("made by Dale")
+        self.status_bar.showMessage("made by Dale (ver 1.0)")
 
         # component
         self.open_file_button = QPushButton("Open File", self)
         self.file_path_box = QLineEdit(self)
         self.team_number_box = QSpinBox(self)
-        self.team_set_button = QPushButton("Team Set", self)
+        self.team_set_button = QPushButton("Group Number", self)
         self.round_number_box = QSpinBox(self)
-        self.round_set_button = QPushButton("Round Set", self)
+        self.round_set_button = QPushButton("Previous Ref.", self)
         # self.result_box = QPlainTextEdit(self)
+        self.show_members_button = QPushButton("Show All Members", self)
         self.start_button = QPushButton("Start", self)
         self.save_result_button = QPushButton("Save Result", self)
-        self.show_members_button = QPushButton("Show Members", self)
         self.clear_button = QPushButton("Clear", self)
         # self.leader_exist_check = QCheckBox(self)
         self.error_dialog = QMessageBox()
@@ -154,12 +158,12 @@ class Main(QMainWindow):
         self.set_round_number()
         processor = DataProcessor(
             prev_data_file_path=self.prev_data_file_path,
-            member_data_file_path="members.csv",
             prev_leader_list=self.prev_leader_list,
             prev_team_list_dict=self.prev_team_list_dict,
             total_team_number=self.total_team_number,
         )
         processor.process()
+        time.sleep(0.3)
         self.set_table_by_processed_team(
             team=processor.team_list, leader=processor.leader_list,
         )
@@ -175,9 +179,15 @@ class Main(QMainWindow):
         row = 0
         self.set_cell_with_data(row, 0, "소속")
         self.set_cell_with_data(row, 1, "구성원")
-        with open("members.csv", "r") as f:
-            reader = csv.reader(f)
-            for line in reader:
+        if self.members_file_path:
+            with open(self.members_file_path, "r") as f:
+                reader = csv.reader(f)
+                for line in reader:
+                    row += 1
+                    self.set_cell_with_data(row, 0, line[0])
+                    self.set_cell_with_data(row, 1, line[1])
+        else:
+            for line in MEMBERS:
                 row += 1
                 self.set_cell_with_data(row, 0, line[0])
                 self.set_cell_with_data(row, 1, line[1])
@@ -191,7 +201,7 @@ class Main(QMainWindow):
         for group in range(self.total_team_number):
             row += 1
             self.set_cell_with_data(row, 0, f"{group + 1}조")
-            self.set_cell_with_data(row, 1, str(leader[group]))
+            self.set_cell_with_data(row, 1, leader[group])
             self.set_cell_with_data(row, 2, str(team[group+1]))
 
 

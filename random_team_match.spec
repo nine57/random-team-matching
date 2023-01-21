@@ -5,7 +5,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ['random_lunch.py'],
+    ['random_team_match.py'],
     pathex=[],
     binaries=[],
     datas=[],
@@ -26,7 +26,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='random_lunch',
+    name='random_team_match',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -37,6 +37,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=['owl_icon.icns'],
 )
 coll = COLLECT(
     exe,
@@ -46,11 +47,11 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='random_lunch',
+    name='random_team_match',
 )
 app = BUNDLE(
     coll,
-    name='random_lunch.app',
-    icon=None,
+    name='random_team_match.app',
+    icon='owl_icon.icns',
     bundle_identifier=None,
 )

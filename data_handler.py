@@ -1,6 +1,23 @@
 import csv
 import random
 
+MEMBERS = [
+    ["운영", "Acker, Becky, EL, Jane, Kevin"],
+    ["마케팅", "Joy, Roxy"],
+    ["기획", "Angie, Otis, Susie, Tami"],
+    ["디자인", "Ann, Ken"],
+    ["서버", "Dale, Ethan, Jake, Jeus, Leo"],
+    ["클라이언트", "Ed, Lego, Mason, Matthew"],
+]
+
+MEMBERS_NAME_DICT = {
+    "acker": "Acker", "angie": "Angie", "ann": "Ann", "becky": "Becky",
+    "dale": "Dale", "ed": "Ed", "el": "EL", "ethan": "Ethan", "jake": "Jake",
+    "jane": "Jane", "jeus": "Jeus", "joy": "Joy", "ken": "Ken",
+    "kevin": "Kevin", "lego": "Lego", "leo": "Leo", "mason": "Mason",
+    "matthew": "Matthew", "otis": "Otis", "roxy": "Roxy", "susie": "Susie", "tami": "Tami"
+}
+
 
 class DataLoader:
     def __init__(
@@ -32,19 +49,10 @@ class DataLoader:
 
 
 class DataProcessor:
-    prev_leader_list = ["Angie", "Susie", "Tami", "Otis", "Ken"]
-    prev_team_list_dict = {
-        1: ["Acker", "Angie", "Ann", "Dale", "Ed"],
-        2: ["Joy", "Kevin", "Leo", "Susie"],
-        3: ["EL", "Mason", "Roxy", "Tami"],
-        4: ["Jane", "Jeus", "Lego", "Otis"],
-        5: ["Becky", "Jake", "Ken", "Matthew"]
-    }
-
     def __init__(
         self,
         prev_data_file_path=None,
-        member_data_file_path="members.csv",
+        member_data_file_path=None,
         prev_leader_list=None,
         prev_team_list_dict=None,
         total_team_number=5
@@ -53,11 +61,11 @@ class DataProcessor:
         self.member_data_file_path = member_data_file_path
         self.prev_leader_list = [
             member.lower() for member in prev_leader_list
-        ] if not None else None
+        ] if prev_leader_list != None else None
         self.prev_team_list_dict = {
             idx: [member.lower() for member in members]
             for idx, members in prev_team_list_dict.items()
-        } if not None else None
+        } if prev_team_list_dict != None else None
         self.team_list = dict()
         self.leader_list = list()
 
@@ -68,10 +76,20 @@ class DataProcessor:
         team_org = list()
         team_org_members = dict()
         team_members = list()
-
-        with open(self.member_data_file_path, 'r') as f:
-            reader = csv.reader(f)
-            for line in reader:
+        if self.member_data_file_path:
+            with open(self.member_data_file_path, 'r') as f:
+                reader = csv.reader(f)
+                for line in reader:
+                    org_name = line[0]
+                    org_members = [
+                        member.lower().strip()
+                        for member in line[1].split(",")
+                    ]
+                    team_org.append(org_name)
+                    team_org_members[org_name] = org_members
+                    team_members += org_members
+        else:
+            for line in MEMBERS:
                 org_name = line[0]
                 org_members = [
                     member.lower().strip()
@@ -99,7 +117,38 @@ class DataProcessor:
         for team_num in self.team_list.keys():
             people = self.team_list[team_num]
             random.shuffle(people)
-            for person in people:
-                if person not in self.prev_leader_list:
-                    self.leader_list.append(person)
-                    break
+            if self.prev_leader_list is not None and len(self.prev_leader_list) > 1:
+                for person in people:
+                    if person not in self.prev_leader_list:
+                        self.leader_list.append(person)
+                        break
+            else:
+                self.leader_list.append(people[0])
+
+        self.change_team_member_name_to_origin_name_and_str()
+        self.change_leader_name_to_origin_name()
+
+    def change_team_member_name_to_origin_name_and_str(self):
+        lower_name = self.team_list
+        self.team_list = dict()
+        for idx, group in lower_name.items():
+            lower_name = list()
+            for name in group:
+                origin_name = MEMBERS_NAME_DICT[name]
+                lower_name.append(origin_name)
+            self.team_list[idx] = self.list_to_str(lower_name)
+
+    def list_to_str(self, target_list):
+        return_str = ", ".join(target_list)
+        return return_str
+
+    def change_leader_name_to_origin_name(self):
+        lower_name = self.leader_list
+        self.leader_list = list()
+        for name in lower_name:
+            try:
+                origin_name = MEMBERS_NAME_DICT[name]
+                self.leader_list.append(origin_name)
+            except KeyError:
+                origin_name = name[0].upper()+name[1:]
+                self.leader_list.append(origin_name)
