@@ -52,6 +52,6 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name='random_team_match.app',
-    icon='owl_icon.icns',
+    icon='./owl_icon.icns',
     bundle_identifier=None,
 )
