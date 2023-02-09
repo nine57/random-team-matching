@@ -163,14 +163,13 @@ class Main(QMainWindow):
             total_team_number=self.total_team_number,
         )
         processor.process()
-        time.sleep(0.3)
         self.set_table_by_processed_team(
             team=processor.team_list, leader=processor.leader_list,
         )
 
     def save_result_to_csv_file(self):
         print("start saving result")
-        self.error_dialog.about(self, "작업 중", "미완성 영역입니다")
+        self.error_dialog.about(self, "작업 중", "미완성 영역")
 
     def set_cell_with_data(self, row, column, data):
         return self.result_table.setItem(row, column, QTableWidgetItem(data))

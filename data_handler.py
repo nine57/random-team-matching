@@ -41,7 +41,8 @@ class DataLoader:
                 titles = next(reader)
                 total_data_len = len(titles)
                 for idx, line in enumerate(reader):
-                    prev_team_list_dict[idx + 1] = line[total_data_len - 2]
+                    prev_team_list_dict[idx +
+                                        1] = line[total_data_len - 2].lower()
                     prev_leader_list.append(line[total_data_len - 1])
             return prev_team_list_dict, prev_leader_list
         elif self.round_number == 2:
@@ -62,10 +63,7 @@ class DataProcessor:
         self.prev_leader_list = [
             member.lower() for member in prev_leader_list
         ] if prev_leader_list != None else None
-        self.prev_team_list_dict = {
-            idx: [member.lower() for member in members]
-            for idx, members in prev_team_list_dict.items()
-        } if prev_team_list_dict != None else None
+        self.prev_team_list_dict = prev_team_list_dict
         self.team_list = dict()
         self.leader_list = list()
 
@@ -98,21 +96,33 @@ class DataProcessor:
                 team_org.append(org_name)
                 team_org_members[org_name] = org_members
                 team_members += org_members
-
         group_num = random.randint(1, self.total_team_number)
         random.shuffle(team_org)
-        for _ in range(len(team_org)):
-            org = team_org.pop()
+        while len(team_org) > 0:
+            org = team_org.pop(0)
             members = team_org_members[org]
             random.shuffle(members)
-            for _ in range(len(members)):
-                member = members.pop()
+            cnt = 0
+            while len(members) > 0:
+                member = members.pop(0)
+                for prev_members in self.prev_team_list_dict.values():
+                    if member in prev_members:
+                        prev_member_list = prev_members
                 group_members = self.team_list[group_num]
-                group_members.append(member)
-                self.team_list[group_num] = group_members
-                group_num += 1
-                if group_num > self.total_team_number:
-                    group_num = 1
+                check = True
+                for per in group_members:
+                    if per in prev_member_list:
+                        check = False
+                if check or cnt == 5:
+                    group_members.append(member)
+                    self.team_list[group_num] = group_members
+                    group_num += 1
+                    if group_num > self.total_team_number:
+                        group_num = 1
+                    cnt = 0
+                else:
+                    members.append(member)
+                    cnt += 1
 
         for team_num in self.team_list.keys():
             people = self.team_list[team_num]
@@ -124,7 +134,6 @@ class DataProcessor:
                         break
             else:
                 self.leader_list.append(people[0])
-
         self.change_team_member_name_to_origin_name_and_str()
         self.change_leader_name_to_origin_name()
 
